@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:note/db_helper.dart';
+import 'package:note/todo.dart';
 
 import 'add_todo_dialog.dart';
 
@@ -8,11 +10,16 @@ class TodoListPage extends StatefulWidget {
 }
 
 class _TodoListPageState extends State<TodoListPage> {
-  List<String> todos = [];
+  List<Todo> _todos = [];
+  DBHelper _dbHelper = DBHelper();
 
-  void _removeTodo(int index) {
-    setState(() {
-      todos.removeAt(index);
+  @override
+  void initState() {
+    super.initState();
+    _dbHelper.readAll().then((value) {
+      setState(() {
+        _todos = value;
+      });
     });
   }
 
@@ -23,14 +30,14 @@ class _TodoListPageState extends State<TodoListPage> {
         title: Text('Todo List'),
       ),
       body: ListView.builder(
-        itemCount: todos.length,
+        itemCount: _todos.length,
         itemBuilder: (context, index) {
           return ListTile(
-            title: Text(todos[index]),
+            title: Text(_todos[index].name),
             trailing: IconButton(
               icon: Icon(Icons.delete),
-              onPressed: () {
-                _removeTodo(index);
+              onPressed: () async {
+                await _removeTodo(index);
               },
             ),
           );
@@ -44,13 +51,26 @@ class _TodoListPageState extends State<TodoListPage> {
           );
 
           if (newTodo != null && newTodo.isNotEmpty) {
-            setState(() {
-              todos.add(newTodo);
-            });
+            await _addTodo(newTodo);
           }
         },
         child: Icon(Icons.add),
       ),
     );
+  }
+
+  Future<void> _addTodo(String name) async {
+    var todo = await _dbHelper.insert(name);
+    setState(() {
+      _todos.add(todo);
+    });
+  }
+
+  Future<void> _removeTodo(int index) async {
+    var id = _todos[index].id;
+    await _dbHelper.delete(id);
+    setState(() {
+      _todos.removeAt(index);
+    });
   }
 }
