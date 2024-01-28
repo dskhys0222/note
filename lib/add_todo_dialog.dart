@@ -9,6 +9,7 @@ class AddTodoDialog extends StatelessWidget {
       title: Text('Add Todo'),
       content: TextField(
         controller: _textController,
+        autofocus: true,
       ),
       actions: [
         TextButton(
