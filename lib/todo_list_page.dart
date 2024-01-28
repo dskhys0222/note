@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:note/db_helper.dart';
+import 'package:note/edit_todo_dialog.dart';
 import 'package:note/todo.dart';
 
 import 'add_todo_dialog.dart';
@@ -40,6 +41,16 @@ class _TodoListPageState extends State<TodoListPage> {
                 await _removeTodo(index);
               },
             ),
+            onTap: () async {
+              String? newName = await showDialog(
+                context: context,
+                builder: (context) => EditTodoDialog(_todos[index]),
+              );
+
+              if (newName != null && newName.isNotEmpty) {
+                await _editTodo(index, newName);
+              }
+            },
           );
         },
       ),
@@ -63,6 +74,15 @@ class _TodoListPageState extends State<TodoListPage> {
     var todo = await _dbHelper.insert(name);
     setState(() {
       _todos.add(todo);
+    });
+  }
+
+  Future<void> _editTodo(int index, String newName) async {
+    var todo = _todos[index];
+    todo.name = newName;
+    await _dbHelper.update(todo);
+    setState(() {
+      _todos[index] = todo;
     });
   }
 

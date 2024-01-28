@@ -38,6 +38,16 @@ class DBHelper {
     return Todo(id: id, name: name);
   }
 
+  Future<int> update(Todo todo) async {
+    var dbClient = await database;
+    return await dbClient.update(
+      'todo',
+      {'name': todo.name},
+      where: 'id = ?',
+      whereArgs: [todo.id],
+    );
+  }
+
   Future<int> delete(int id) async {
     var dbClient = await database;
     return await dbClient.delete(

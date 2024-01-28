@@ -1,6 +1,6 @@
 class Todo {
   final int id;
-  final String name;
+  String name;
 
   Todo({required this.id, required this.name});
 
