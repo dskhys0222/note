@@ -14,21 +14,35 @@ class EditTodoDialog extends StatelessWidget {
       content: TextField(
         controller: _textController,
         autofocus: true,
+        onSubmitted: (value) {
+          _submit(context);
+        },
       ),
       actions: <Widget>[
         TextButton(
           child: Text('Cancel'),
           onPressed: () {
-            Navigator.of(context).pop();
+            _cancel(context);
           },
         ),
         TextButton(
           child: Text('Save'),
           onPressed: () {
-            Navigator.of(context).pop(_textController.text);
+            _submit(context);
           },
         ),
       ],
     );
+  }
+
+  void _submit(BuildContext context) {
+    final String text = _textController.text;
+    if (text.isNotEmpty) {
+      Navigator.of(context).pop(text);
+    }
+  }
+
+  void _cancel(BuildContext context) {
+    Navigator.of(context).pop();
   }
 }

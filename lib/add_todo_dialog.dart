@@ -10,21 +10,35 @@ class AddTodoDialog extends StatelessWidget {
       content: TextField(
         controller: _textController,
         autofocus: true,
+        onSubmitted: (value) {
+          _submit(context);
+        },
       ),
       actions: [
         TextButton(
           onPressed: () {
-            Navigator.pop(context, null);
+            _cancel(context);
           },
           child: Text('Cancel'),
         ),
         TextButton(
           onPressed: () {
-            Navigator.pop(context, _textController.text);
+            _submit(context);
           },
           child: Text('Add'),
         ),
       ],
     );
+  }
+
+  void _submit(BuildContext context) {
+    final String text = _textController.text;
+    if (text.isNotEmpty) {
+      Navigator.of(context).pop(text);
+    }
+  }
+
+  void _cancel(BuildContext context) {
+    Navigator.of(context).pop();
   }
 }
