@@ -35,29 +35,38 @@ class _TodoListPageState extends State<TodoListPage> {
           await _reorderTodos(oldIndex, newIndex);
         },
         children: _todos
-            .map((todo) => ListTile(
+            .map((todo) => Dismissible(
                   key: Key(todo.id.toString()),
-                  leading: Padding(
-                    padding: const EdgeInsets.only(left: 10.0),
-                    child: Icon(Icons.circle, size: 10.0),
+                  direction: DismissDirection.endToStart,
+                  onDismissed: (direction) async {
+                    await _removeTodo(todo.id);
+                  },
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight, // アイコンを右寄せに配置
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 20.0),
+                      child:
+                          Icon(Icons.delete, color: Colors.white), // ごみ箱アイコンを表示
+                    ),
                   ),
-                  title: Text(todo.name),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete),
-                    onPressed: () async {
-                      await _removeTodo(todo.id);
+                  child: ListTile(
+                    leading: Padding(
+                      padding: const EdgeInsets.only(left: 10.0),
+                      child: Icon(Icons.circle, size: 10.0),
+                    ),
+                    title: Text(todo.name),
+                    onTap: () async {
+                      String? newName = await showDialog(
+                        context: context,
+                        builder: (context) => EditTodoDialog(todo),
+                      );
+
+                      if (newName != null && newName.isNotEmpty) {
+                        await _editTodo(todo.id, newName);
+                      }
                     },
                   ),
-                  onTap: () async {
-                    String? newName = await showDialog(
-                      context: context,
-                      builder: (context) => EditTodoDialog(todo),
-                    );
-
-                    if (newName != null && newName.isNotEmpty) {
-                      await _editTodo(todo.id, newName);
-                    }
-                  },
                 ))
             .toList(),
       ),
