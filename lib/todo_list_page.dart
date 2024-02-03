@@ -37,6 +37,10 @@ class _TodoListPageState extends State<TodoListPage> {
         children: _todos
             .map((todo) => ListTile(
                   key: Key(todo.id.toString()),
+                  leading: Padding(
+                    padding: const EdgeInsets.only(left: 10.0),
+                    child: Icon(Icons.circle, size: 10.0),
+                  ),
                   title: Text(todo.name),
                   trailing: IconButton(
                     icon: Icon(Icons.delete),
