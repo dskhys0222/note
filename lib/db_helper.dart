@@ -23,7 +23,7 @@ class DBHelper {
 
   Future<List<Todo>> readAll() async {
     var dbClient = await database;
-    var result = await dbClient.query('todo');
+    var result = await dbClient.query('todo', orderBy: '"order"');
     return result
         .map((item) => Todo(
               id: item['id'] as int,
@@ -34,17 +34,29 @@ class DBHelper {
 
   Future<Todo> insert(String name) async {
     var dbClient = await database;
-    var id = await dbClient.insert('todo', {'name': name});
+    var todos = await readAll();
+    var order = todos.length;
+    var id = await dbClient.insert('todo', {'name': name, 'order': order});
     return Todo(id: id, name: name);
   }
 
-  Future<int> update(Todo todo) async {
+  Future<int> updateName(Todo todo) async {
     var dbClient = await database;
     return await dbClient.update(
       'todo',
       {'name': todo.name},
       where: 'id = ?',
       whereArgs: [todo.id],
+    );
+  }
+
+  Future<int> updateOrder(int id, int order) async {
+    var dbClient = await database;
+    return await dbClient.update(
+      'todo',
+      {'order': order},
+      where: 'id = ?',
+      whereArgs: [id],
     );
   }
 
@@ -58,6 +70,7 @@ class DBHelper {
   }
 
   Future<void> _onCreate(Database db, int version) async {
-    await db.execute('CREATE TABLE todo (id INTEGER PRIMARY KEY, name TEXT)');
+    await db.execute(
+        'CREATE TABLE todo (id INTEGER PRIMARY KEY, name TEXT, "order" INTEGER)');
   }
 }

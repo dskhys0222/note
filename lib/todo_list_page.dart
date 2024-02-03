@@ -30,29 +30,32 @@ class _TodoListPageState extends State<TodoListPage> {
       appBar: AppBar(
         title: Text('Todo List'),
       ),
-      body: ListView.builder(
-        itemCount: _todos.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(_todos[index].name),
-            trailing: IconButton(
-              icon: Icon(Icons.delete),
-              onPressed: () async {
-                await _removeTodo(index);
-              },
-            ),
-            onTap: () async {
-              String? newName = await showDialog(
-                context: context,
-                builder: (context) => EditTodoDialog(_todos[index]),
-              );
-
-              if (newName != null && newName.isNotEmpty) {
-                await _editTodo(index, newName);
-              }
-            },
-          );
+      body: ReorderableListView(
+        onReorder: (oldIndex, newIndex) async {
+          await _reorderTodos(oldIndex, newIndex);
         },
+        children: _todos
+            .map((todo) => ListTile(
+                  key: Key(todo.id.toString()),
+                  title: Text(todo.name),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () async {
+                      await _removeTodo(todo.id);
+                    },
+                  ),
+                  onTap: () async {
+                    String? newName = await showDialog(
+                      context: context,
+                      builder: (context) => EditTodoDialog(todo),
+                    );
+
+                    if (newName != null && newName.isNotEmpty) {
+                      await _editTodo(todo.id, newName);
+                    }
+                  },
+                ))
+            .toList(),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
@@ -77,17 +80,32 @@ class _TodoListPageState extends State<TodoListPage> {
     });
   }
 
-  Future<void> _editTodo(int index, String newName) async {
+  Future<void> _editTodo(int id, String newName) async {
+    var index = _todos.indexWhere((element) => element.id == id);
     var todo = _todos[index];
     todo.name = newName;
-    await _dbHelper.update(todo);
+    await _dbHelper.updateName(todo);
     setState(() {
       _todos[index] = todo;
     });
   }
 
-  Future<void> _removeTodo(int index) async {
-    var id = _todos[index].id;
+  Future<void> _reorderTodos(int oldIndex, int newIndex) async {
+    setState(() {
+      if (newIndex > oldIndex) {
+        newIndex -= 1;
+      }
+      final Todo item = _todos.removeAt(oldIndex);
+      _todos.insert(newIndex, item);
+    });
+
+    for (int i = 0; i < _todos.length; i++) {
+      _dbHelper.updateOrder(_todos[i].id, i);
+    }
+  }
+
+  Future<void> _removeTodo(int id) async {
+    var index = _todos.indexWhere((element) => element.id == id);
     await _dbHelper.delete(id);
     setState(() {
       _todos.removeAt(index);
