@@ -1,5 +1,6 @@
 import 'dart:io' as io;
 
+import 'package:note/tag.dart';
 import 'package:note/todo.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -21,23 +22,65 @@ class DBHelper {
     return db;
   }
 
-  Future<List<Todo>> readAll() async {
+  Future<List<Tag>> readAllTag() async {
     var dbClient = await database;
-    var result = await dbClient.query('todo', orderBy: '"order"');
+    var result = await dbClient.query('tag', orderBy: 'name');
     return result
-        .map((item) => Todo(
+        .map((item) => Tag(
               id: item['id'] as int,
               name: item['name'] as String,
             ))
         .toList();
   }
 
-  Future<Todo> insert(String name) async {
+  Future<List<Todo>> readAllTodo() async {
     var dbClient = await database;
-    var todos = await readAll();
+    var result = await dbClient.rawQuery(
+      '''
+      SELECT
+        todo.id AS id
+        , todo.name AS name
+        , GROUP_CONCAT(tag.name, ' ') AS tags
+      FROM
+        todo
+        LEFT JOIN todo_tag ON todo.id = todo_tag.todo_id
+        LEFT JOIN tag ON todo_tag.tag_id = tag.id
+      GROUP BY
+        todo.id
+      ORDER BY
+        todo."order"
+      ''',
+    );
+    return result
+        .map((item) => Todo(
+              id: item['id'] as int,
+              name: item['name'] as String,
+              tags: item['tags'] != null
+                  ? (item['tags'] as String).split(' ')
+                  : [],
+            ))
+        .toList();
+  }
+
+  Future<int> insertTodo(String name) async {
+    var dbClient = await database;
+    var todos = await readAllTodo();
     var order = todos.length;
     var id = await dbClient.insert('todo', {'name': name, 'order': order});
-    return Todo(id: id, name: name);
+    return id;
+  }
+
+  Future<int> insertTag(String name) async {
+    var dbClient = await database;
+    var id = await dbClient.insert('tag', {'name': name});
+    return id;
+  }
+
+  Future<int> insertTodoTag(int todoId, int tagId) async {
+    var dbClient = await database;
+    var id =
+        await dbClient.insert('todo_tag', {'todo_id': todoId, 'tag_id': tagId});
+    return id;
   }
 
   Future<int> updateName(Todo todo) async {
@@ -60,7 +103,7 @@ class DBHelper {
     );
   }
 
-  Future<int> delete(int id) async {
+  Future<int> deleteTodo(int id) async {
     var dbClient = await database;
     return await dbClient.delete(
       'todo',
@@ -69,8 +112,43 @@ class DBHelper {
     );
   }
 
+  Future<int> deleteTodoTag(int todoId, int tagId) async {
+    var dbClient = await database;
+    return await dbClient.delete(
+      'todo_tag',
+      where: 'todo_id = ? AND tag_id = ?',
+      whereArgs: [todoId, tagId],
+    );
+  }
+
   Future<void> _onCreate(Database db, int version) async {
     await db.execute(
-        'CREATE TABLE todo (id INTEGER PRIMARY KEY, name TEXT, "order" INTEGER)');
+      '''
+      CREATE TABLE todo (
+        id INTEGER PRIMARY KEY AUTOINCREMENT
+        , name TEXT
+        , "order" INTEGER
+      )
+      ''',
+    );
+    await db.execute(
+      '''
+      CREATE TABLE tag (
+        id INTEGER PRIMARY KEY AUTOINCREMENT
+        , name TEXT
+      )
+      ''',
+    );
+    await db.execute(
+      '''
+      CREATE TABLE todo_tag (
+        todo_id INTEGER
+        , tag_id INTEGER
+        , FOREIGN KEY (todo_id) REFERENCES todo (id)
+        , FOREIGN KEY (tag_id) REFERENCES tag (id)
+        , PRIMARY KEY (todo_id, tag_id)
+      )
+      ''',
+    );
   }
 }

@@ -3,20 +3,43 @@ import 'package:note/todo.dart';
 
 class EditTodoDialog extends StatelessWidget {
   final TextEditingController _textController;
+  final TextEditingController _tagController;
 
   EditTodoDialog(Todo todo)
-      : _textController = TextEditingController(text: todo.name);
+      : _textController = TextEditingController(text: todo.name),
+        _tagController = TextEditingController(text: todo.tags.join(', '));
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text('Edit todo'),
-      content: TextField(
-        controller: _textController,
-        autofocus: true,
-        onSubmitted: (value) {
-          _submit(context);
-        },
+      content: SizedBox(
+        height: 150,
+        child: Column(
+          children: [
+            SizedBox(
+              height: 80,
+              child: TextField(
+                controller: _textController,
+                decoration: InputDecoration(labelText: 'Name'),
+                autofocus: true,
+                onSubmitted: (value) {
+                  _submit(context);
+                },
+              ),
+            ),
+            SizedBox(
+              height: 60,
+              child: TextField(
+                controller: _tagController,
+                decoration: InputDecoration(labelText: 'Tag'),
+                onSubmitted: (value) {
+                  _submit(context);
+                },
+              ),
+            ),
+          ],
+        ),
       ),
       actions: <Widget>[
         TextButton(
@@ -36,9 +59,13 @@ class EditTodoDialog extends StatelessWidget {
   }
 
   void _submit(BuildContext context) {
-    final String text = _textController.text;
-    if (text.isNotEmpty) {
-      Navigator.of(context).pop(text);
+    final String name = _textController.text;
+    final String tag = _tagController.text;
+    if (name.isNotEmpty) {
+      Navigator.of(context).pop(Todo(
+          id: null,
+          name: name,
+          tags: tag.split(' ').where((x) => x.isNotEmpty).toList()));
     }
   }
 
