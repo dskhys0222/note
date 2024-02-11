@@ -14,6 +14,8 @@ class _TodoListPageState extends State<TodoListPage> {
   List<Todo> _todos = [];
   List<Tag> _tags = [];
   DBHelper _dbHelper = DBHelper();
+  List<String> _selectedTags = [];
+  bool _showTagSelection = false;
 
   @override
   void initState() {
@@ -35,7 +37,9 @@ class _TodoListPageState extends State<TodoListPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Todo List',
+          _selectedTags.isEmpty
+              ? 'All'
+              : _selectedTags.map((x) => '#$x').join(', '),
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -45,6 +49,9 @@ class _TodoListPageState extends State<TodoListPage> {
           await _reorderTodos(oldIndex, newIndex);
         },
         children: _todos
+            .where((todo) =>
+                _selectedTags.isEmpty ||
+                todo.tags.any((tag) => _selectedTags.contains(tag)))
             .map((todo) => Dismissible(
                   key: Key(todo.id.toString()),
                   direction: DismissDirection.endToStart,
@@ -91,18 +98,75 @@ class _TodoListPageState extends State<TodoListPage> {
                 ))
             .toList(),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          Todo? data = await showDialog(
-            context: context,
-            builder: (context) => AddTodoDialog(),
-          );
+      floatingActionButton: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          Positioned(
+            left: 30,
+            bottom: 0,
+            child: FloatingActionButton(
+              onPressed: () {
+                setState(() {
+                  _showTagSelection = !_showTagSelection;
+                });
+              },
+              child: Icon(Icons.tag),
+            ),
+          ),
+          if (_showTagSelection)
+            Positioned(
+              width: MediaQuery.of(context).size.width - 30,
+              left: 30,
+              bottom: 70,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Wrap(
+                    spacing: 5,
+                    runSpacing: 5,
+                    alignment: WrapAlignment.center,
+                    children: _tags
+                        .map((x) => x.name)
+                        .map((tag) => FilterChip(
+                              label: Text(tag),
+                              selected: _selectedTags.contains(tag),
+                              onSelected: (bool selected) {
+                                setState(() {
+                                  if (selected) {
+                                    _selectedTags = [(tag)];
+                                  } else {
+                                    _selectedTags.remove(tag);
+                                  }
+                                });
+                              },
+                            ))
+                        .toList(),
+                  ),
+                ),
+              ),
+            ),
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: FloatingActionButton(
+              onPressed: () async {
+                Todo? data = await showDialog(
+                  context: context,
+                  builder: (context) => AddTodoDialog(),
+                );
 
-          if (data != null) {
-            await _addTodo(data);
-          }
-        },
-        child: Icon(Icons.add),
+                if (data != null) {
+                  await _addTodo(data);
+                }
+              },
+              child: Icon(Icons.add),
+            ),
+          ),
+        ],
       ),
     );
   }

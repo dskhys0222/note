@@ -7,7 +7,7 @@ class EditTodoDialog extends StatelessWidget {
 
   EditTodoDialog(Todo todo)
       : _textController = TextEditingController(text: todo.name),
-        _tagController = TextEditingController(text: todo.tags.join(', '));
+        _tagController = TextEditingController(text: todo.tags.join(' '));
 
   @override
   Widget build(BuildContext context) {
