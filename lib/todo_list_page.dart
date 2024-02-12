@@ -102,7 +102,7 @@ class _TodoListPageState extends State<TodoListPage> {
         alignment: Alignment.bottomCenter,
         children: [
           Positioned(
-            left: 30,
+            right: 75,
             bottom: 0,
             child: FloatingActionButton(
               onPressed: () {
