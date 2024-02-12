@@ -45,6 +45,7 @@ class _TodoListPageState extends State<TodoListPage> {
         centerTitle: true,
       ),
       body: ReorderableListView(
+        padding: EdgeInsets.only(bottom: 80),
         onReorder: (oldIndex, newIndex) async {
           await _reorderTodos(oldIndex, newIndex);
         },
