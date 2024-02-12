@@ -74,12 +74,29 @@ class _TodoListPageState extends State<TodoListPage> {
                     title: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(todo.name),
-                        Text(
-                          todo.tags.join(', '),
-                          style: TextStyle(
-                            fontSize: 12.0,
-                            color: Theme.of(context).colorScheme.secondary,
+                        Flexible(
+                          fit: FlexFit.tight,
+                          flex: 3,
+                          child: Text(
+                            todo.name,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: true,
+                          ),
+                        ),
+                        Flexible(
+                          fit: FlexFit.loose,
+                          flex: 1,
+                          child: Text(
+                            todo.tags.join(', '),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: true,
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              fontSize: 12.0,
+                              color: Theme.of(context).colorScheme.secondary,
+                            ),
                           ),
                         )
                       ],
