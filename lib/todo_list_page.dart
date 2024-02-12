@@ -43,6 +43,7 @@ class _TodoListPageState extends State<TodoListPage> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
+        scrolledUnderElevation: 0,
       ),
       body: ReorderableListView(
         padding: EdgeInsets.only(bottom: 80),
@@ -200,7 +201,8 @@ class _TodoListPageState extends State<TodoListPage> {
               onPressed: () async {
                 Todo? data = await showDialog(
                   context: context,
-                  builder: (context) => AddTodoDialog(),
+                  builder: (context) =>
+                      AddTodoDialog(initialTags: _selectedTags),
                 );
 
                 if (data != null) {

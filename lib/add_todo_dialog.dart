@@ -5,6 +5,10 @@ class AddTodoDialog extends StatelessWidget {
   final TextEditingController _textController = TextEditingController();
   final TextEditingController _tagController = TextEditingController();
 
+  AddTodoDialog({required List<String> initialTags}) {
+    _tagController.text = initialTags.join(' ');
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
