@@ -131,40 +131,58 @@ class _TodoListPageState extends State<TodoListPage> {
             ),
           ),
           if (_showTagSelection)
-            Positioned(
-              width: MediaQuery.of(context).size.width - 30,
-              left: 30,
-              bottom: 70,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Wrap(
-                    spacing: 5,
-                    runSpacing: 5,
-                    alignment: WrapAlignment.center,
-                    children: _tags
-                        .map((x) => x.name)
-                        .map((tag) => FilterChip(
-                              label: Text(tag),
-                              selected: _selectedTags.contains(tag),
-                              onSelected: (bool selected) {
-                                setState(() {
-                                  if (selected) {
-                                    _selectedTags = [(tag)];
-                                  } else {
-                                    _selectedTags.remove(tag);
-                                  }
-                                });
-                              },
-                            ))
-                        .toList(),
+            Stack(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _showTagSelection = false;
+                    });
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    color: Colors.transparent,
                   ),
                 ),
-              ),
+                Positioned(
+                  width: MediaQuery.of(context).size.width - 30,
+                  left: 30,
+                  bottom: 70,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outlineVariant
+                          .withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Wrap(
+                        spacing: 5,
+                        runSpacing: 5,
+                        alignment: WrapAlignment.center,
+                        children: _tags
+                            .map((x) => x.name)
+                            .map((tag) => FilterChip(
+                                  label: Text(tag),
+                                  selected: _selectedTags.contains(tag),
+                                  onSelected: (bool selected) {
+                                    setState(() {
+                                      if (selected) {
+                                        _selectedTags = [(tag)];
+                                      } else {
+                                        _selectedTags.remove(tag);
+                                      }
+                                    });
+                                  },
+                                ))
+                            .toList(),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           Positioned(
             right: 0,
