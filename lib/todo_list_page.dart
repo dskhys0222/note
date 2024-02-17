@@ -4,6 +4,7 @@ import 'package:note/db_helper.dart';
 import 'package:note/edit_todo_dialog.dart';
 import 'package:note/tag.dart';
 import 'package:note/todo.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class TodoListPage extends StatefulWidget {
   @override
@@ -25,11 +26,19 @@ class _TodoListPageState extends State<TodoListPage> {
         _todos = value;
       });
     });
-    _dbHelper.readAllTag().then((value) {
-      setState(() {
-        _tags = value;
-      });
-    });
+    _dbHelper
+        .readAllTag()
+        .then((value) {
+          setState(() {
+            _tags = value;
+          });
+        })
+        .then((_) => _loadSelectedTagId())
+        .then((value) {
+          setState(() {
+            _selectedTagId = value;
+          });
+        });
   }
 
   @override
@@ -181,6 +190,8 @@ class _TodoListPageState extends State<TodoListPage> {
                                               selected ? tag.id : null;
                                           _showTagSelection = false;
                                         });
+                                        _saveSelectedTagId(
+                                            selected ? tag.id : null);
                                       },
                                     ))
                                 .toList(),
@@ -304,5 +315,19 @@ class _TodoListPageState extends State<TodoListPage> {
     setState(() {
       _todos.removeAt(index);
     });
+  }
+
+  Future<void> _saveSelectedTagId(int? tagId) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (tagId == null) {
+      await prefs.remove('_selectedTagId');
+    } else {
+      await prefs.setInt('_selectedTagId', tagId);
+    }
+  }
+
+  Future<int?> _loadSelectedTagId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('_selectedTagId');
   }
 }
