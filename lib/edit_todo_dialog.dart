@@ -7,7 +7,7 @@ class EditTodoDialog extends StatelessWidget {
 
   EditTodoDialog(Todo todo)
       : _textController = TextEditingController(text: todo.name),
-        _tagController = TextEditingController(text: todo.tags.join(' '));
+        _tagController = TextEditingController(text: todo.tagIds.join(' '));
 
   @override
   Widget build(BuildContext context) {
@@ -62,10 +62,7 @@ class EditTodoDialog extends StatelessWidget {
     final String name = _textController.text;
     final String tag = _tagController.text;
     if (name.isNotEmpty) {
-      Navigator.of(context).pop(Todo(
-          id: null,
-          name: name,
-          tags: tag.split(' ').where((x) => x.isNotEmpty).toList()));
+      Navigator.of(context).pop([name, ...tag.split(' ')]);
     }
   }
 

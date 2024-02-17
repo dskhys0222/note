@@ -14,7 +14,7 @@ class _TodoListPageState extends State<TodoListPage> {
   List<Todo> _todos = [];
   List<Tag> _tags = [];
   DBHelper _dbHelper = DBHelper();
-  List<String> _selectedTags = [];
+  int? _selectedTagId;
   bool _showTagSelection = false;
 
   @override
@@ -37,9 +37,9 @@ class _TodoListPageState extends State<TodoListPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _selectedTags.isEmpty
+          _selectedTagId == null
               ? 'All'
-              : _selectedTags.map((x) => '#$x').join(' & '),
+              : _tags.firstWhere((x) => x.id == _selectedTagId).name,
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -52,8 +52,7 @@ class _TodoListPageState extends State<TodoListPage> {
         },
         children: _todos
             .where((todo) =>
-                _selectedTags.isEmpty ||
-                _selectedTags.every((tag) => todo.tags.contains(tag)))
+                _selectedTagId == null || todo.tagIds.contains(_selectedTagId))
             .map((todo) => Dismissible(
                   key: Key(todo.id.toString()),
                   direction: DismissDirection.endToStart,
@@ -81,16 +80,18 @@ class _TodoListPageState extends State<TodoListPage> {
                           flex: 3,
                           child: Text(
                             todo.name,
-                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            softWrap: true,
                           ),
                         ),
                         Flexible(
                           fit: FlexFit.loose,
                           flex: 1,
                           child: Text(
-                            todo.tags.join(', '),
+                            todo.tagIds
+                                .map((x) =>
+                                    _tags.firstWhere((tag) => tag.id == x))
+                                .map((x) => x.name)
+                                .join(', '),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             softWrap: true,
@@ -104,13 +105,13 @@ class _TodoListPageState extends State<TodoListPage> {
                       ],
                     ),
                     onTap: () async {
-                      Todo? data = await showDialog(
+                      List<String>? data = await showDialog(
                         context: context,
                         builder: (context) => EditTodoDialog(todo),
                       );
 
                       if (data != null) {
-                        await _editTodo(todo.id!, data);
+                        await _editTodo(todo.id!, data[0], data.sublist(1));
                       }
                     },
                   ),
@@ -170,18 +171,15 @@ class _TodoListPageState extends State<TodoListPage> {
                             runSpacing: 5,
                             alignment: WrapAlignment.center,
                             children: _tags
-                                .map((x) => x.name)
                                 .map((tag) => FilterChip(
-                                      label: Text(tag),
+                                      label: Text(tag.name),
                                       showCheckmark: false,
-                                      selected: _selectedTags.contains(tag),
+                                      selected: tag.id == _selectedTagId,
                                       onSelected: (bool selected) {
                                         setState(() {
-                                          if (selected) {
-                                            _selectedTags.add(tag);
-                                          } else {
-                                            _selectedTags.remove(tag);
-                                          }
+                                          _selectedTagId =
+                                              selected ? tag.id : null;
+                                          _showTagSelection = false;
                                         });
                                       },
                                     ))
@@ -199,14 +197,17 @@ class _TodoListPageState extends State<TodoListPage> {
             bottom: 0,
             child: FloatingActionButton(
               onPressed: () async {
-                Todo? data = await showDialog(
+                List<String>? data = await showDialog(
                   context: context,
-                  builder: (context) =>
-                      AddTodoDialog(initialTags: _selectedTags),
+                  builder: (context) => AddTodoDialog(
+                    initialTag: _selectedTagId == null
+                        ? null
+                        : _tags.firstWhere((x) => x.id == _selectedTagId).name,
+                  ),
                 );
 
                 if (data != null) {
-                  await _addTodo(data);
+                  await _addTodo(data[0], data.sublist(1));
                 }
               },
               child: Icon(Icons.add),
@@ -217,29 +218,37 @@ class _TodoListPageState extends State<TodoListPage> {
     );
   }
 
-  Future<void> _addTodo(Todo data) async {
-    var todoId = await _dbHelper.insertTodo(data.name);
+  Future<void> _addTodo(String name, List<String> tags) async {
+    var todoId = await _dbHelper.insertTodo(name);
 
-    var tags = data.tags.toSet().toList();
-    for (var tag in tags) {
+    var uniqueTags = tags.toSet().toList();
+    for (var tag in uniqueTags) {
       await _addTodoTag(todoId, tag);
     }
 
     setState(() {
-      _todos.add(Todo(id: todoId, name: data.name, tags: tags));
+      _todos.add(Todo(
+        id: todoId,
+        name: name,
+        tagIds: uniqueTags
+            .map((x) => _tags.firstWhere((tag) => tag.name == x).id)
+            .toList(),
+      ));
     });
   }
 
-  Future<void> _editTodo(int todoId, Todo data) async {
+  Future<void> _editTodo(int todoId, String name, List<String> tags) async {
     var index = _todos.indexWhere((x) => x.id == todoId);
     var todo = _todos[index];
-    if (data.name != todo.name) {
-      todo.name = data.name;
+    if (name != todo.name) {
+      todo.name = name;
       await _dbHelper.updateName(todo);
     }
 
-    var oldTags = todo.tags.toSet();
-    var newTags = data.tags.toSet();
+    var oldTags = todo.tagIds
+        .map((x) => _tags.firstWhere((tag) => tag.id == x).name)
+        .toSet();
+    var newTags = tags.toSet();
 
     var removed = oldTags.difference(newTags);
     for (var tag in removed) {
@@ -252,7 +261,8 @@ class _TodoListPageState extends State<TodoListPage> {
       await _addTodoTag(todoId, tag);
     }
 
-    todo.tags = data.tags;
+    todo.tagIds =
+        tags.map((x) => _tags.firstWhere((tag) => tag.name == x).id).toList();
 
     setState(() {
       _todos[index] = todo;
@@ -262,7 +272,7 @@ class _TodoListPageState extends State<TodoListPage> {
   Future<void> _addTodoTag(int todoId, String tagName) async {
     var index = _tags.indexWhere((x) => x.name == tagName);
     int tagId;
-    if (index > 0) {
+    if (index >= 0) {
       tagId = (_tags[index].id);
     } else {
       tagId = await _dbHelper.insertTag(tagName);

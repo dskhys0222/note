@@ -25,12 +25,7 @@ class DBHelper {
   Future<List<Tag>> readAllTag() async {
     var dbClient = await database;
     var result = await dbClient.query('tag', orderBy: 'name');
-    return result
-        .map((item) => Tag(
-              id: item['id'] as int,
-              name: item['name'] as String,
-            ))
-        .toList();
+    return result.map((item) => Tag.fromMap(item)).toList();
   }
 
   Future<List<Todo>> readAllTodo() async {
@@ -40,26 +35,17 @@ class DBHelper {
       SELECT
         todo.id AS id
         , todo.name AS name
-        , GROUP_CONCAT(tag.name, ' ') AS tags
+        , GROUP_CONCAT(todo_tag.tag_id, ',') AS tagIds
       FROM
         todo
         LEFT JOIN todo_tag ON todo.id = todo_tag.todo_id
-        LEFT JOIN tag ON todo_tag.tag_id = tag.id
       GROUP BY
         todo.id
       ORDER BY
         todo."order"
       ''',
     );
-    return result
-        .map((item) => Todo(
-              id: item['id'] as int,
-              name: item['name'] as String,
-              tags: item['tags'] != null
-                  ? (item['tags'] as String).split(' ')
-                  : [],
-            ))
-        .toList();
+    return result.map((item) => Todo.fromMap(item)).toList();
   }
 
   Future<int> insertTodo(String name) async {

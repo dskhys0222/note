@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:note/todo.dart';
 
 class AddTodoDialog extends StatelessWidget {
   final TextEditingController _textController = TextEditingController();
   final TextEditingController _tagController = TextEditingController();
 
-  AddTodoDialog({required List<String> initialTags}) {
-    _tagController.text = initialTags.join(' ');
+  AddTodoDialog({required String? initialTag}) {
+    _tagController.text = initialTag ?? '';
   }
 
   @override
@@ -62,10 +61,7 @@ class AddTodoDialog extends StatelessWidget {
     final String name = _textController.text;
     final String tag = _tagController.text;
     if (name.isNotEmpty) {
-      Navigator.of(context).pop(Todo(
-          id: null,
-          name: name,
-          tags: tag.split(' ').where((x) => x.isNotEmpty).toList()));
+      Navigator.of(context).pop([name, ...tag.split(' ')]);
     }
   }
 
