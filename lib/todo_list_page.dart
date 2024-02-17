@@ -115,9 +115,15 @@ class _TodoListPageState extends State<TodoListPage> {
                     ),
                     onTap: () async {
                       List<String>? data = await showDialog(
-                        context: context,
-                        builder: (context) => EditTodoDialog(todo),
-                      );
+                          context: context,
+                          builder: (context) => EditTodoDialog(
+                                todo.name,
+                                todo.tagIds
+                                    .map((x) => _tags
+                                        .firstWhere((tag) => tag.id == x)
+                                        .name)
+                                    .join(' '),
+                              ));
 
                       if (data != null) {
                         await _editTodo(todo.id!, data[0], data.sublist(1));

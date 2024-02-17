@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:note/todo.dart';
 
 class EditTodoDialog extends StatelessWidget {
   final TextEditingController _textController;
   final TextEditingController _tagController;
 
-  EditTodoDialog(Todo todo)
-      : _textController = TextEditingController(text: todo.name),
-        _tagController = TextEditingController(text: todo.tagIds.join(' '));
+  EditTodoDialog(String name, String tags)
+      : _textController = TextEditingController(text: name),
+        _tagController = TextEditingController(text: tags);
 
   @override
   Widget build(BuildContext context) {
