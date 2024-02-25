@@ -35,6 +35,7 @@ class DBHelper {
       SELECT
         todo.id AS id
         , todo.name AS name
+        , todo.description AS description
         , GROUP_CONCAT(todo_tag.tag_id, ',') AS tagIds
       FROM
         todo
@@ -52,7 +53,11 @@ class DBHelper {
     var dbClient = await database;
     var todos = await readAllTodo();
     var order = todos.length;
-    var id = await dbClient.insert('todo', {'name': name, 'order': order});
+    var id = await dbClient.insert('todo', {
+      'name': name,
+      'description': '',
+      'order': order,
+    });
     return id;
   }
 
@@ -112,7 +117,8 @@ class DBHelper {
       '''
       CREATE TABLE todo (
         id INTEGER PRIMARY KEY AUTOINCREMENT
-        , name TEXT
+        , name TEXT NOT NULL
+        , description TEXT
         , "order" INTEGER
       )
       ''',
@@ -121,7 +127,7 @@ class DBHelper {
       '''
       CREATE TABLE tag (
         id INTEGER PRIMARY KEY AUTOINCREMENT
-        , name TEXT
+        , name TEXT NOT NULL
       )
       ''',
     );

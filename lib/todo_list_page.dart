@@ -247,6 +247,7 @@ class _TodoListPageState extends State<TodoListPage> {
       _todos.add(Todo(
         id: todoId,
         name: name,
+        description: '',
         tagIds: uniqueTags
             .map((x) => _tags.firstWhere((tag) => tag.name == x).id)
             .toList(),
